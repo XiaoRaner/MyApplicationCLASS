@@ -32,11 +32,11 @@ public class RateActivity extends AppCompatActivity {
          // 首先获取用户输入，然后根据不同币种计算出不同的结果，如果用户没有输入内容，则给出提示
 
         //获取输入
-        String str = rmb.getText().toString();//取出的一定是文本类型
+        String str = rmb.getText().toString();// 取出的一定是文本类型
 
         float r = 0;//定义在外面，之后会用到
         if(str.length()>0){//文本类型不能为空
-        r = Float.parseFloat(str);//文本类型转为可计算的数字类型Float
+        r = Float.parseFloat(str);//将文本类型转为可计算的数字类型Float
         }else{
         //用户没有输入内容,给出提示信息
         Toast.makeText(this, "请输入内容", Toast.LENGTH_SHORT).show();
