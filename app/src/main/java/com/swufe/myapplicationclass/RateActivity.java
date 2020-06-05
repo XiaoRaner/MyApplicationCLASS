@@ -7,6 +7,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,7 +17,13 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class RateActivity extends AppCompatActivity {
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+public class RateActivity extends AppCompatActivity implements Runnable{
 
     private final String TAG="Rate";
    /* private float dollarRate=0.1f;
@@ -29,7 +37,9 @@ public class RateActivity extends AppCompatActivity {
     EditText rmb; //输入
     TextView show;//输出
 
-    //onCreate方法1
+    Handler handler;//添加一类变量Handler handler
+
+//onCreate方法1
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,9 +57,31 @@ public class RateActivity extends AppCompatActivity {
         Log.i(TAG, "onCreate: sp dollarRate=" + dollarRate);//看是否获得数据
         Log.i(TAG, "onCreate: sp euroRate=" + euroRate);
         Log.i(TAG, "onCreate: sp wonRate=" + wonRate);
+
+
+//在onCreate方法中开启子线程，并重写handleMessage方法
+
+        //开启子线程
+        Thread t = new Thread(this);//t为子线程
+        t.start();
+
+        handler = new Handler() {
+            //改写父类方法，相当于新建一个java类(.class)，作为队列，储存数据
+            @Override
+            public void handleMessage(Message msg) {
+                if(msg.what==5){  //what要相同
+                    String str = (String) msg.obj;//获取数据进行处理；强制转换（必须是可以强转的）
+                    Log.i(TAG, "handleMessage: getMessage msg = " + str);
+                    show.setText(str);//获取子线程数据，在主线程中显示出来
+                }
+
+                super.handleMessage(msg);
+        }
+    };
+
     }
 
-     //onClick方法2，参数为View时，作为按钮事件处理。点击控件时调用。控件加上android:onClick="onClick"
+//onClick方法2，参数为View时，作为按钮事件处理。点击控件时调用。控件加上android:onClick="onClick"
      public void onClick(View btn)        {
          // 首先获取用户输入，然后根据不同币种计算出不同的结果，如果用户没有输入内容，则给出提示
 
@@ -82,7 +114,7 @@ public class RateActivity extends AppCompatActivity {
         }
 }
 
-    //打开新页面的方法3
+//打开新页面的方法3
     public void openOne(View btn){
 
        /* //打开一个页面Activity
@@ -105,7 +137,7 @@ public class RateActivity extends AppCompatActivity {
 
     }
 
-    //代码被提取成一个方法，在方法3和方法6中使用。避免大段重复代码
+//代码被提取成一个方法，在方法3和方法6中使用。避免大段重复代码
     private void openConfig() {
         //打开一个页面Activity
         Intent config = new Intent(this, ConfigActivity.class);//调用Intent对象。参数：从哪个窗口打开，要打开的窗口名字
@@ -123,7 +155,7 @@ public class RateActivity extends AppCompatActivity {
         startActivityForResult(config, 1);//打开窗口，还可以带回数据（窗口对象，一个整数）
     }
 
-    //处理带回的新数据的方法4
+//处理带回的新数据的方法4
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) { //（请求编码（区分是谁返回的数据），响应编码（区分返回的数据是什么），）
 
@@ -154,14 +186,14 @@ public class RateActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    //添加菜单的方法5
+//添加菜单的方法5
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.rate,menu);//调用菜单文件
         return true;
     }
 
-    //菜单事件处理方法6
+//菜单事件处理方法6
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId()==R.id.menu_set){  //通过菜单按钮id确认是该按钮
@@ -171,11 +203,28 @@ public class RateActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+//子线程方法————接口方法，run方法，多线程情况下完成其他线程任务
+    @Override
+    public void run() {
+        Log.i(TAG, "run: run()......");
+
+        //给子线程加上延时
+        for(int i=1;i<3;i++){
+            Log.i(TAG, "run: i=" + i);
+            try {
+                Thread.sleep(2000);//延时2000毫秒，即两秒钟
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        //获取Msg对象，用于返回主线程。即把一个一个的Msg放入队列中
+        Message msg = handler.obtainMessage(5);
+        //msg.what = 5;//what用于整数类型，用于数据比对，类似快递寄件的电话号码
+        msg.obj = "Hello from run()";//obj类型可以传输所有数据
+        handler.sendMessage(msg);//handler把msg放入msg队列中去
 
 
 
-
-
-
-
+    }
 }
