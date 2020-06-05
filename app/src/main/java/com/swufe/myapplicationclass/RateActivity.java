@@ -17,7 +17,7 @@ import android.widget.Toast;
 
 public class RateActivity extends AppCompatActivity {
 
-    private final String TAG="Rate";//?
+    private final String TAG="Rate";
    /* private float dollarRate=0.1f;
     private float euroRate=0.2f;
     private float wonRate=0.3f;    //变量值，不能再直接输入数字*/
