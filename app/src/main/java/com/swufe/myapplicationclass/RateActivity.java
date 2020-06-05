@@ -96,7 +96,7 @@ public class RateActivity extends AppCompatActivity {
     private void openConfig() {
         //打开一个页面Activity
         Intent config = new Intent(this, ConfigActivity.class);//调用Intent对象。参数：从哪个窗口打开，要打开的窗口名字
-        //Intent web=new Intent(Intent.)    //谷歌搜索：android点击按钮打开浏览器网页
+        //Intent web=new Intent(Intent.)    //谷歌搜索：android点击按钮打开浏览器网页 //还可以打电话等
 
         config.putExtra("dollar_rate_key", dollarRate);//把参数从本界面传递到下个界面。在此三个汇率作为参数
         config.putExtra("euro_rate_key", euroRate);//数据标签，数据值
