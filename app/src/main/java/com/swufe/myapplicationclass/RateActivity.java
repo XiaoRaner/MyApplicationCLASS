@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
+import android.app.ListActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -249,7 +250,7 @@ public class RateActivity extends AppCompatActivity implements Runnable{
         else if(item.getItemId()==R.id.open_list){
 
             //打开列表窗口
-            Intent list = new Intent(this, RateListActivity.class);//调用Intent对象。参数：从哪个窗口打开，要打开的窗口名字
+            Intent list = new Intent(this, MyList2Activity.class);//调用Intent对象。参数：从哪个窗口打开，要打开的窗口名字
             startActivity(list);//打开窗口
 
         }
