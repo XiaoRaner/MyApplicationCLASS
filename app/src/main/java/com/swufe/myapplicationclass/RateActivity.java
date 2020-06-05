@@ -2,6 +2,7 @@ package com.swufe.myapplicationclass;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -10,6 +11,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class RateActivity extends AppCompatActivity {
+
+    private final String TAG="Rate";//?
+    private float dollarRate=0.1f;
+    private float euroRate=0.2f;
+    private float wonRate=0.3f;    //变量值，不能再直接输入数字
 
     EditText rmb; //输入
     TextView show;//输出
@@ -47,13 +53,34 @@ public class RateActivity extends AppCompatActivity {
         //计算
          // 完成对按钮的事件处理，因为三个按钮都由一个方法处理，需要在方法中区分事件来源，可以通过btn.getId()来进行判断。
         if(btn.getId()==R.id.dollar){  //当用户点击美元时
-        show.setText(String.valueOf(r*1/6.7f));//加f,使double的小数转为float类型
+       // show.setText(String.valueOf(r*1/6.7f));//加f,使double的小数转为float类型
             //输出，转换类型,float到String
+            show.setText(String.format("%.2f",r*dollarRate));
         }else if(btn.getId()==R.id.euro){
-        show.setText(String.valueOf(r*1/11.0f));//整数相除还是整数，0...取整还是0
+            //show.setText(String.valueOf(r*1/11.0f));//整数相除还是整数，0...取整还是0
                                                 //加.0变成小数，加f转换
+            show.setText(String.format("%.2f",r*euroRate));
         }else{
-        show.setText(String.valueOf(r*500f));
+        //show.setText(String.valueOf(r*500f));
+            show.setText(String.format("%.2f",r*wonRate));
         }
+}
 
-}  }
+//打开新页面的方法
+    public void openOne(View btn){
+        //打开一个页面Activity
+        Intent config = new Intent(this,ConfigActivity.class);//调用Intent对象。参数：从哪个窗口打开，要打开的窗口名字
+        //Intent web=new Intent(Intent.)    //谷歌：android点击按钮打开浏览器网页
+
+        config.putExtra("dollar_rate_key",dollarRate);//把参数从本界面传递到下个界面。在此三个汇率作为参数
+        config.putExtra("euro_rate_key",euroRate);//数据标签，数据值
+        config.putExtra("won_rate_key",wonRate);
+
+        Log.i(TAG, "openOne: dollarRate=" + dollarRate);//输出TAG，调试时看数据有没有传过去
+        Log.i(TAG, "openOne: euroRate=" + euroRate);
+        Log.i(TAG, "openOne: wonRate=" + wonRate);
+
+        //startActivity(config); //打开窗口，config对应的
+        startActivityForResult(config,1);
+    }
+}//谷歌：android点击按钮打开浏览器网页

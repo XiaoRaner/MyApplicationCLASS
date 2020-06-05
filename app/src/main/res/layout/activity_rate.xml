@@ -52,5 +52,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
+    <!-- 添加一个按钮用于打开配置页面 -->
+    <!-- openOne是打开新页面的方法 -->
+    <Button
+        android:text="@string/btn_opencfg_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:onClick="openOne"
+        android:id="@+id/btn_opencfg" />
+
 
 </LinearLayout>
