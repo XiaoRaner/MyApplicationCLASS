@@ -29,6 +29,9 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 public class RateActivity extends AppCompatActivity implements Runnable{
 
@@ -40,6 +43,7 @@ public class RateActivity extends AppCompatActivity implements Runnable{
     private float dollarRate=0.0f;//想要把新修改的数据保存下来。
     private float euroRate=0.0f;    //改成这里不设置值，值的数据用SharedPreference从.xml文件里面读取
     private float wonRate=0.0f;        //每次打开默认的是最新的值
+             private String updateDate="";//定义更新日期的字符串
 
     EditText rmb; //输入
     TextView show;//输出
@@ -61,9 +65,30 @@ public class RateActivity extends AppCompatActivity implements Runnable{
         dollarRate = sharedPreferences.getFloat("dollar_rate",0.0f);//读取数据（数据的id，默认值）
         euroRate = sharedPreferences.getFloat("euro_rate",0.0f);
         wonRate = sharedPreferences.getFloat("won_rate",0.0f);
+             updateDate = sharedPreferences.getString("update_date","");//获得更新日期
+
+             //获取当前系统时间
+             Date today = Calendar.getInstance().getTime();//日期对象
+             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");//年月日
+             final String todayStr = sdf.format(today);//时间对象转字符串对象
+
         Log.i(TAG, "onCreate: sp dollarRate=" + dollarRate);//看是否获得数据
         Log.i(TAG, "onCreate: sp euroRate=" + euroRate);
         Log.i(TAG, "onCreate: sp wonRate=" + wonRate);
+             Log.i(TAG, "onCreate: sp updateDate=" + updateDate);
+             Log.i(TAG, "onCreate: todayStr=" + todayStr);
+
+             //判断时间是否与系统一样
+             if(!todayStr.equals(updateDate)){
+                 Log.i(TAG, "onCreate: 需要更新");
+                 //开启子线程
+                 Thread t = new Thread(this);
+                 t.start();
+             }else{
+                 Log.i(TAG, "onCreate: 不需要更新");
+             }
+
+
 
 
 //在onCreate方法中开启子线程，并重写handleMessage方法
@@ -84,6 +109,16 @@ public class RateActivity extends AppCompatActivity implements Runnable{
                     Log.i(TAG, "handleMessage: dollarRate:" + dollarRate);
                     Log.i(TAG, "handleMessage: euroRate:" + euroRate);
                     Log.i(TAG, "handleMessage: wonRate:" + wonRate);
+
+                         //保存更新的日期
+                         SharedPreferences sp = getSharedPreferences("myrate", Activity.MODE_PRIVATE);
+                         SharedPreferences.Editor editor = sp.edit();
+                         editor.putFloat("dollar_rate",dollarRate);
+                         editor.putFloat("euro_rate",euroRate);
+                         editor.putFloat("won_rate",wonRate);
+                         editor.putString("update_date",todayStr);
+                         editor.apply();
+
 
                     Toast.makeText(RateActivity.this, "汇率已更新", Toast.LENGTH_SHORT).show();//给提示
                 }
@@ -210,8 +245,15 @@ public class RateActivity extends AppCompatActivity implements Runnable{
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId()==R.id.menu_set){  //通过菜单按钮id确认是该按钮
             openConfig();
+        }
+        else if(item.getItemId()==R.id.open_list){
+
+            //打开列表窗口
+            Intent list = new Intent(this, RateListActivity.class);//调用Intent对象。参数：从哪个窗口打开，要打开的窗口名字
+            startActivity(list);//打开窗口
 
         }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -226,8 +268,6 @@ public class RateActivity extends AppCompatActivity implements Runnable{
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
-
 
         //获取网络数据
        /* URL url = null;//URL标记网络地址
@@ -245,9 +285,23 @@ public class RateActivity extends AppCompatActivity implements Runnable{
             e.printStackTrace();
         }*/ //直接把网页给解析网页的Document包
 
+        Bundle bundle ;//用于保存获取到的汇率
 
-        Bundle bundle = new Bundle();//用于保存获取到的汇率
+        bundle=getFromBOC();//大段代码抽成一个方法，在下方单独列出
 
+        //通过Msg对象，把数据带回主线程
+        //获取Msg对象，用于返回主线程。即把一个一个的Msg放入队列中
+        Message msg = handler.obtainMessage(5);
+        //msg.what = 5;//what用于整数类型，用于数据比对，类似快递寄件的电话号码
+        msg.obj = bundle;//obj类型可以传输所有数据;  放入bundle,带回
+        handler.sendMessage(msg);//handler把msg放入msg队列中去
+
+    }
+
+
+//从bankofchina中获取数据 的方法
+  private Bundle getFromBOC() {
+        Bundle bundle=new Bundle();
         Document doc = null; //解析网页的包
         try {
             String url = "https://www.usd-cny.com/bankofchina.htm";
@@ -262,7 +316,7 @@ public class RateActivity extends AppCompatActivity implements Runnable{
                 i++;
             }  //找所需要的数据是第几个table */
 
-          Element table1 = tables.get(0);//所需数据在第1个table,在集合中排第0
+        Element table1 = tables.get(0);//所需数据在第1个table,在集合中排第0
             //Log.i(TAG, "run: table6=" + table6);
 
             //获取TD中的数据
@@ -289,18 +343,55 @@ public class RateActivity extends AppCompatActivity implements Runnable{
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-      //通过Msg对象，把数据带回主线程
-        //获取Msg对象，用于返回主线程。即把一个一个的Msg放入队列中
-        Message msg = handler.obtainMessage(5);
-        //msg.what = 5;//what用于整数类型，用于数据比对，类似快递寄件的电话号码
-        msg.obj = bundle;//obj类型可以传输所有数据;  放入bundle,带回
-        handler.sendMessage(msg);//handler把msg放入msg队列中去
-
-
+        return bundle;
     }
 
-//将输入流InputStream转换为String的方法8
+    /*
+    //从Usd-Cny中获取数据 的方法
+        private Bundle getFromUsdcny() {
+            Bundle bundle=new Bundle();
+            Document doc = null; //解析网页的包
+            try {
+                String url = "https://www.usd-cny.com/bankofchina.htm";
+                doc = Jsoup.connect(url).get();//把网页给这个包解析
+                Log.i(TAG, "run: " + doc.title());//TAG，获得当前网页的title
+
+                Elements tables = doc.getElementsByTag("table");//获得网页标签名table的集合
+
+
+                Element table1 = tables.get(0);//所需数据在第1个table,在集合中排第0
+                //Log.i(TAG, "run: table6=" + table6);
+
+                //获取TD中的数据
+                Elements tds = table1.getElementsByTag("td");//从table1中获得所需数据所在的 td 集合
+                for(int i=0;i<tds.size();i+=6){//原网页每行6个元素，想提取同一列就要每隔6个提取一次
+                    Element td1 = tds.get(i);//td1为第一列数据
+                    Element td2 = tds.get(i+5);//td2为刘列数据，再第一列上加5
+
+                    String str1 = td1.text();
+                    String val = td2.text();
+
+                    Log.i(TAG, "run: " + str1 + "==>" + val);//看提取出了什么数据
+
+                    float v = 100f / Float.parseFloat(val);
+                    if("美元".equals(str1)){           //如果是美元
+                        bundle.putFloat("dollar-rate", v);   //数据存入bundle
+                    }else if("欧元".equals(str1)){
+                        bundle.putFloat("euro-rate", v);
+                    }else if("韩元".equals(str1)){
+                        bundle.putFloat("won-rate", v);
+                    }
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return bundle;
+        }
+    */
+
+
+    //将输入流InputStream转换为String的方法8
     private String inputStream2String(InputStream inputStream) throws IOException {
         final int bufferSize = 1024;
         final char[] buffer = new char[bufferSize];
