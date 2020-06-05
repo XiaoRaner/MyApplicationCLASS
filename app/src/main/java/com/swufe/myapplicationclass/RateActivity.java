@@ -1,10 +1,13 @@
 package com.swufe.myapplicationclass;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -20,7 +23,7 @@ public class RateActivity extends AppCompatActivity {
     EditText rmb; //输入
     TextView show;//输出
 
-    //onCreate方法
+    //onCreate方法1
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,7 +36,7 @@ public class RateActivity extends AppCompatActivity {
         show = (TextView) findViewById(R.id.show);
     }
 
-     //onClick方法，参数为View时，作为按钮事件处理。点击控件时调用。控件加上android:onClick="onClick"
+     //onClick方法2，参数为View时，作为按钮事件处理。点击控件时调用。控件加上android:onClick="onClick"
      public void onClick(View btn)        {
          // 首先获取用户输入，然后根据不同币种计算出不同的结果，如果用户没有输入内容，则给出提示
 
@@ -66,9 +69,10 @@ public class RateActivity extends AppCompatActivity {
         }
 }
 
-//打开新页面的方法
+    //打开新页面的方法3
     public void openOne(View btn){
-        //打开一个页面Activity
+
+       /* //打开一个页面Activity
         Intent config = new Intent(this,ConfigActivity.class);//调用Intent对象。参数：从哪个窗口打开，要打开的窗口名字
         //Intent web=new Intent(Intent.)    //谷歌：android点击按钮打开浏览器网页
 
@@ -81,10 +85,32 @@ public class RateActivity extends AppCompatActivity {
         Log.i(TAG, "openOne: wonRate=" + wonRate);
 
         //startActivity(config); //打开窗口（可以穿数据过去）
-        startActivityForResult(config,1);//打开窗口，还可以带回数据（窗口对象，一个整数）
+        startActivityForResult(config,1);//打开窗口，还可以带回数据（窗口对象，一个整数）*/
+
+        openConfig();
+
+
     }
 
-    //处理带回的新数据的方法
+    //代码被提取成一个方法，在方法3和方法6中使用
+    private void openConfig() {
+        //打开一个页面Activity
+        Intent config = new Intent(this, ConfigActivity.class);//调用Intent对象。参数：从哪个窗口打开，要打开的窗口名字
+        //Intent web=new Intent(Intent.)    //谷歌：android点击按钮打开浏览器网页
+
+        config.putExtra("dollar_rate_key", dollarRate);//把参数从本界面传递到下个界面。在此三个汇率作为参数
+        config.putExtra("euro_rate_key", euroRate);//数据标签，数据值
+        config.putExtra("won_rate_key", wonRate);
+
+        Log.i(TAG, "openOne: dollarRate=" + dollarRate);//输出TAG，调试时看数据有没有传过去
+        Log.i(TAG, "openOne: euroRate=" + euroRate);
+        Log.i(TAG, "openOne: wonRate=" + wonRate);
+
+        //startActivity(config); //打开窗口（可以穿数据过去）
+        startActivityForResult(config, 1);//打开窗口，还可以带回数据（窗口对象，一个整数）
+    }
+
+    //处理带回的新数据的方法4
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) { //（请求编码（区分是谁返回的数据），响应编码（区分返回的数据是什么），）
 
@@ -103,6 +129,27 @@ public class RateActivity extends AppCompatActivity {
 
         super.onActivityResult(requestCode, resultCode, data);
     }
+
+    //添加菜单的方法5
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.rate,menu);//调用菜单文件
+        return true;
+    }
+
+    //菜单事件处理方法6
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(item.getItemId()==R.id.menu_set){  //通过菜单按钮id确认是该按钮
+            openConfig();
+
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
+
+
 
 
 
