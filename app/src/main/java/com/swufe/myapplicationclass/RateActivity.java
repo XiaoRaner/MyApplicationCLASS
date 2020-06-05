@@ -19,6 +19,8 @@ import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -203,7 +205,7 @@ public class RateActivity extends AppCompatActivity implements Runnable{
         return super.onOptionsItemSelected(item);
     }
 
-//子线程方法————接口方法，run方法，多线程情况下完成其他线程任务
+//子线程方法7————接口方法，run方法，多线程情况下完成其他线程任务
     @Override
     public void run() {
         Log.i(TAG, "run: run()......");
@@ -224,7 +226,62 @@ public class RateActivity extends AppCompatActivity implements Runnable{
         msg.obj = "Hello from run()";//obj类型可以传输所有数据
         handler.sendMessage(msg);//handler把msg放入msg队列中去
 
+        //获取网络数据
+        URL url = null;//URL标记网络地址
+        try {
+            url = new URL("http://www.usd-cny.com/icbc.htm");//填入地址
+            HttpURLConnection http = (HttpURLConnection) url.openConnection(); //打开链接
+            InputStream in = http.getInputStream();//输入流，存网络数据
 
+            String html = inputStream2String(in);//把输入流通过方法8转成字符串
+            Log.i(TAG, "run: html=" + html);
+
+        } catch (MalformedURLException e) {//异常捕获
+            e.printStackTrace();
+        } catch (IOException e) {//异常捕获
+            e.printStackTrace();
+        }
 
     }
+
+//将输入流InputStream转换为String的方法8
+    private String inputStream2String(InputStream inputStream) throws IOException {
+        final int bufferSize = 1024;
+        final char[] buffer = new char[bufferSize];
+        final StringBuilder out = new StringBuilder();
+        Reader in = new InputStreamReader(inputStream, "gb2312");//和网页的编码一致
+        while (true) {
+            int rsz = in.read(buffer, 0, buffer.length);
+            if (rsz < 0)
+                break;
+            out.append(buffer, 0, rsz);
+        }
+        return out.toString();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
