@@ -45,16 +45,31 @@ public final String TAG="ConfigActivity";//定义TAG,该页面可用TAG
         euroText.setText(String.valueOf(euro2));
         wonText.setText(String.valueOf(won2));
 
-
-        //setResult(2,intent);
-
-//返回到调用页面
-        //    finish();
-        // }
     }
-    //方法，保存数据
+
+
+    //保存数据的方法
     public void save(View btn){
         Log.i(TAG,"save:");
+
+        float newDollar = Float.parseFloat(dollarText.getText().toString()); //获取新的值
+        float newEuroi = Float.parseFloat(euroText.getText().toString());
+        float newWon = Float.parseFloat(wonText.getText().toString());
+
+        Log.i(TAG, "save: 获取到新的值");//加TAG，看新数据是否获取成功
+        Log.i(TAG, "save: newDollar=" + newDollar);
+        Log.i(TAG, "save: newEuroi=" + newEuroi);
+        Log.i(TAG, "save: newWon=" + newWon);
+
+        Intent intent = getIntent();       //获取intent对象，准备带回去
+        Bundle bdl = new Bundle();   //数据保存到Bundle（或放入到Extra），相当于打包作用
+        bdl.putFloat("key_dollar",newDollar);//新数据标签，新数据
+        bdl.putFloat("key_euro",newEuroi);
+        bdl.putFloat("key_won",newWon);
+        intent.putExtras(bdl);  //把打包好的放入intent
+        setResult(2,intent);//数据带回（响应代码，intent）
+
+        finish();//返回到调用页面
 
     }
 

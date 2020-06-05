@@ -80,7 +80,31 @@ public class RateActivity extends AppCompatActivity {
         Log.i(TAG, "openOne: euroRate=" + euroRate);
         Log.i(TAG, "openOne: wonRate=" + wonRate);
 
-        //startActivity(config); //打开窗口，config对应的
-        startActivityForResult(config,1);
+        //startActivity(config); //打开窗口（可以穿数据过去）
+        startActivityForResult(config,1);//打开窗口，还可以带回数据（窗口对象，一个整数）
     }
-}//谷歌：android点击按钮打开浏览器网页
+
+    //处理带回的新数据的方法
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) { //（请求编码（区分是谁返回的数据），响应编码（区分返回的数据是什么），）
+
+        if(requestCode==1 && resultCode==2){
+
+           //准备拆分打包回来的数据
+            Bundle bundle = data.getExtras();
+            dollarRate = bundle.getFloat("key_dollar",0.1f);//按新数据标签取出新数据，赋值给当前变量
+            euroRate = bundle.getFloat("key_euro",0.1f);
+            wonRate = bundle.getFloat("key_won",0.1f);
+
+            Log.i(TAG, "onActivityResult: dollarRate=" + dollarRate);
+            Log.i(TAG, "onActivityResult: euroRate=" + euroRate);
+            Log.i(TAG, "onActivityResult: wonRate=" + wonRate);
+        }
+
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+
+
+
+}
