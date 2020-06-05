@@ -3,7 +3,9 @@ package com.swufe.myapplicationclass;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -16,9 +18,13 @@ import android.widget.Toast;
 public class RateActivity extends AppCompatActivity {
 
     private final String TAG="Rate";//?
-    private float dollarRate=0.1f;
+   /* private float dollarRate=0.1f;
     private float euroRate=0.2f;
-    private float wonRate=0.3f;    //变量值，不能再直接输入数字
+    private float wonRate=0.3f;    //变量值，不能再直接输入数字*/
+
+    private float dollarRate=0.0f;//想要把新修改的数据保存下来。
+    private float euroRate=0.0f;    //改成这里不设置值，值的数据用SharedPreference从.xml文件里面读取
+    private float wonRate=0.0f;        //每次打开默认的是最新的值
 
     EditText rmb; //输入
     TextView show;//输出
@@ -28,12 +34,19 @@ public class RateActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //引入布局页面activity_rate
-        setContentView(R.layout.activity_rate);
+        setContentView(R.layout.activity_rate);//引入布局页面activity_rate
 
-        //在onCreate方法中获取对控件的引用
-        rmb = (EditText) findViewById(R.id.rmb);  //获取引用+强制转换
+        rmb = (EditText) findViewById(R.id.rmb);  //在onCreate方法中获取对控件的引用  //获取引用+强制转换
         show = (TextView) findViewById(R.id.show);
+
+        //获取SP里数据
+        SharedPreferences sharedPreferences = getSharedPreferences("myrate", Activity.MODE_PRIVATE);//类 对象名=get方法（数据保存.xml文件名，访问权限）；
+        dollarRate = sharedPreferences.getFloat("dollar_rate",0.0f);//读取数据（数据的id，默认值）
+        euroRate = sharedPreferences.getFloat("euro_rate",0.0f);
+        wonRate = sharedPreferences.getFloat("won_rate",0.0f);
+        Log.i(TAG, "onCreate: sp dollarRate=" + dollarRate);//看是否获得数据
+        Log.i(TAG, "onCreate: sp euroRate=" + euroRate);
+        Log.i(TAG, "onCreate: sp wonRate=" + wonRate);
     }
 
      //onClick方法2，参数为View时，作为按钮事件处理。点击控件时调用。控件加上android:onClick="onClick"
@@ -125,6 +138,17 @@ public class RateActivity extends AppCompatActivity {
             Log.i(TAG, "onActivityResult: dollarRate=" + dollarRate);
             Log.i(TAG, "onActivityResult: euroRate=" + euroRate);
             Log.i(TAG, "onActivityResult: wonRate=" + wonRate);
+
+
+
+            //将新设置的汇率写到SP里
+            SharedPreferences sharedPreferences = getSharedPreferences("myrate", Activity.MODE_PRIVATE);//先获得sharedPreferences对象
+            SharedPreferences.Editor editor = sharedPreferences.edit();//获得editor对象
+            editor.putFloat("dollar_rate",dollarRate);//数据放入：设数据标签（和取出时的标签一致），数据本身
+            editor.putFloat("euro_rate",euroRate);
+            editor.putFloat("won_rate",wonRate);
+            editor.commit();   //保存
+            Log.i(TAG, "onActivityResult: 数据已保存到sharedPreferences");
         }
 
         super.onActivityResult(requestCode, resultCode, data);
