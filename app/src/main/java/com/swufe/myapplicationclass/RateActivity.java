@@ -29,9 +29,6 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 
 public class RateActivity extends AppCompatActivity implements Runnable{
 
@@ -44,14 +41,12 @@ public class RateActivity extends AppCompatActivity implements Runnable{
     private float euroRate=0.0f;    //改成这里不设置值，值的数据用SharedPreference从.xml文件里面读取
     private float wonRate=0.0f;        //每次打开默认的是最新的值
 
-    private String updateDate="";//更新日期
-
     EditText rmb; //输入
     TextView show;//输出
 
     Handler handler;//添加一类变量Handler handler
 
-//onCreate方法1
+    //onCreate方法1
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,31 +61,9 @@ public class RateActivity extends AppCompatActivity implements Runnable{
         dollarRate = sharedPreferences.getFloat("dollar_rate",0.0f);//读取数据（数据的id，默认值）
         euroRate = sharedPreferences.getFloat("euro_rate",0.0f);
         wonRate = sharedPreferences.getFloat("won_rate",0.0f);
-        updateDate = sharedPreferences.getString("update_date","");
-
-
-        //获取当前系统时间
-        Date today = Calendar.getInstance().getTime();//日期对象
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");//年月日
-        final String todayStr = sdf.format(today);//时间对象转字符串对象
-
-        Log.i(TAG, "onCreate: sp updateDate=" + updateDate);
-        Log.i(TAG, "onCreate: todayStr=" + todayStr);
-
         Log.i(TAG, "onCreate: sp dollarRate=" + dollarRate);//看是否获得数据
         Log.i(TAG, "onCreate: sp euroRate=" + euroRate);
         Log.i(TAG, "onCreate: sp wonRate=" + wonRate);
-        Log.i(TAG, "onCreate:todayStr=" + todayStr);
-
-        //判断时间是否与系统一样
-        if(!todayStr.equals(updateDate)){
-            Log.i(TAG, "onCreate: 需要更新");
-            //开启子线程
-            Thread t = new Thread(this);
-            t.start();
-        }else{
-            Log.i(TAG, "onCreate: 不需要更新");
-        }
 
 
 //在onCreate方法中开启子线程，并重写handleMessage方法
@@ -112,64 +85,48 @@ public class RateActivity extends AppCompatActivity implements Runnable{
                     Log.i(TAG, "handleMessage: euroRate:" + euroRate);
                     Log.i(TAG, "handleMessage: wonRate:" + wonRate);
 
-                    //保存更新的日期
-                    SharedPreferences sp = getSharedPreferences("myrate", Activity.MODE_PRIVATE);
-                    SharedPreferences.Editor editor = sp.edit();
-                    editor.putFloat("dollar_rate",dollarRate);
-                    editor.putFloat("euro_rate",euroRate);
-                    editor.putFloat("won_rate",wonRate);
-                    editor.putString("update_date",todayStr);
-                    editor.apply();
-
-
                     Toast.makeText(RateActivity.this, "汇率已更新", Toast.LENGTH_SHORT).show();//给提示
                 }
                 super.handleMessage(msg);
-        }
-    };
-
-
-
-
-
-
+            }
+        };
 
     }
 
-//onClick方法2，参数为View时，作为按钮事件处理。点击控件时调用。控件加上android:onClick="onClick"
-     public void onClick(View btn)        {
-         // 首先获取用户输入，然后根据不同币种计算出不同的结果，如果用户没有输入内容，则给出提示
+    //onClick方法2，参数为View时，作为按钮事件处理。点击控件时调用。控件加上android:onClick="onClick"
+    public void onClick(View btn)        {
+        // 首先获取用户输入，然后根据不同币种计算出不同的结果，如果用户没有输入内容，则给出提示
 
         //获取输入
         String str = rmb.getText().toString();// 取出的一定是文本类型
 
         float r = 0;//定义在外面，之后会用到
         if(str.length()>0){//文本类型不能为空
-        r = Float.parseFloat(str);//将文本类型转为可计算的数字类型Float
+            r = Float.parseFloat(str);//将文本类型转为可计算的数字类型Float
         }else{
-        //用户没有输入内容,给出提示信息
-        Toast.makeText(this, "请输入内容", Toast.LENGTH_SHORT).show();
-        //文本，显示时间长短
-        return;
+            //用户没有输入内容,给出提示信息
+            Toast.makeText(this, "请输入内容", Toast.LENGTH_SHORT).show();
+            //文本，显示时间长短
+            return;
         }
 
         //计算
-         // 完成对按钮的事件处理，因为三个按钮都由一个方法处理，需要在方法中区分事件来源，可以通过btn.getId()来进行判断。
+        // 完成对按钮的事件处理，因为三个按钮都由一个方法处理，需要在方法中区分事件来源，可以通过btn.getId()来进行判断。
         if(btn.getId()==R.id.dollar){  //当用户点击美元时
-       // show.setText(String.valueOf(r*1/6.7f));//加f,使double的小数转为float类型
+            // show.setText(String.valueOf(r*1/6.7f));//加f,使double的小数转为float类型
             //输出，转换类型,float到String
             show.setText(String.format("%.2f",r*dollarRate));
         }else if(btn.getId()==R.id.euro){
             //show.setText(String.valueOf(r*1/11.0f));//整数相除还是整数，0...取整还是0
-                                                //加.0变成小数，加f转换
+            //加.0变成小数，加f转换
             show.setText(String.format("%.2f",r*euroRate));
         }else{
-        //show.setText(String.valueOf(r*500f));
+            //show.setText(String.valueOf(r*500f));
             show.setText(String.format("%.2f",r*wonRate));
         }
-}
+    }
 
-//打开新页面的方法3
+    //打开新页面的方法3
     public void openOne(View btn){
 
        /* //打开一个页面Activity
@@ -192,7 +149,7 @@ public class RateActivity extends AppCompatActivity implements Runnable{
 
     }
 
-//代码被提取成一个方法，在方法3和方法6中使用。避免大段重复代码
+    //代码被提取成一个方法，在方法3和方法6中使用。避免大段重复代码
     private void openConfig() {
         //打开一个页面Activity
         Intent config = new Intent(this, ConfigActivity.class);//调用Intent对象。参数：从哪个窗口打开，要打开的窗口名字
@@ -210,13 +167,13 @@ public class RateActivity extends AppCompatActivity implements Runnable{
         startActivityForResult(config, 1);//打开窗口，还可以带回数据（窗口对象，一个整数）
     }
 
-//处理带回的新数据的方法4
+    //处理带回的新数据的方法4
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) { //（请求编码（区分是谁返回的数据），响应编码（区分返回的数据是什么），）
 
         if(requestCode==1 && resultCode==2){
 
-           //准备拆分打包回来的数据
+            //准备拆分打包回来的数据
             Bundle bundle = data.getExtras();
             dollarRate = bundle.getFloat("key_dollar",0.1f);//按新数据标签取出新数据，赋值给当前变量
             euroRate = bundle.getFloat("key_euro",0.1f);
@@ -241,14 +198,14 @@ public class RateActivity extends AppCompatActivity implements Runnable{
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-//添加菜单的方法5
+    //添加菜单的方法5
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.rate,menu);//调用菜单文件
         return true;
     }
 
-//菜单事件处理方法6
+    //菜单事件处理方法6
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId()==R.id.menu_set){  //通过菜单按钮id确认是该按钮
@@ -258,17 +215,17 @@ public class RateActivity extends AppCompatActivity implements Runnable{
         return super.onOptionsItemSelected(item);
     }
 
-//子线程方法7————接口方法，run方法，多线程情况下完成其他线程任务
+    //子线程方法7————接口方法，run方法，多线程情况下完成其他线程任务
     @Override
     public void run() {
         Log.i(TAG, "run: run()......");
 
         //给子线程加上延时
-            try {
-                Thread.sleep(3000);//延时3000毫秒，即3秒钟
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        try {
+            Thread.sleep(3000);//延时3000毫秒，即3秒钟
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
 
 
@@ -293,24 +250,24 @@ public class RateActivity extends AppCompatActivity implements Runnable{
 
         Document doc = null; //解析网页的包
         try {
-            String url = "http://www.usd-cny.com/bankofchina.htm";
+            String url = "https://www.usd-cny.com/bankofchina.htm";
             doc = Jsoup.connect(url).get();//把网页给这个包解析
             Log.i(TAG, "run: " + doc.title());//TAG，获得当前网页的title
 
             Elements tables = doc.getElementsByTag("table");//获得网页标签名table的集合
 
-            /*int i=1;
+          /*  int i=1;
             for(Element table:tables){
                 Log.i(TAG,"run:table["+i+"]="+table);
                 i++;
-            }*/   //找所需要的数据是第几个table
+            }  //找所需要的数据是第几个table */
 
-            Element table6 = tables.get(5);//所需数据在第6个table,在集合中排第5
+          Element table1 = tables.get(0);//所需数据在第1个table,在集合中排第0
             //Log.i(TAG, "run: table6=" + table6);
 
             //获取TD中的数据
-            Elements tds = table6.getElementsByTag("td");//从table6中获得所需数据所在的 td 集合
-            for(int i=0;i<tds.size();i+=8){//原网页每行8个元素，想提取同一列就要每隔8个提取一次
+            Elements tds = table1.getElementsByTag("td");//从table1中获得所需数据所在的 td 集合
+            for(int i=0;i<tds.size();i+=6){//原网页每行6个元素，想提取同一列就要每隔6个提取一次
                 Element td1 = tds.get(i);//td1为第一列数据
                 Element td2 = tds.get(i+5);//td2为刘列数据，再第一列上加5
 
@@ -324,7 +281,7 @@ public class RateActivity extends AppCompatActivity implements Runnable{
                     bundle.putFloat("dollar-rate", v);   //数据存入bundle
                 }else if("欧元".equals(str1)){
                     bundle.putFloat("euro-rate", v);
-                }else if("韩国元".equals(str1)){
+                }else if("韩元".equals(str1)){
                     bundle.putFloat("won-rate", v);
                 }
             }
@@ -333,15 +290,12 @@ public class RateActivity extends AppCompatActivity implements Runnable{
             e.printStackTrace();
         }
 
-        //通过Msg对象，把数据带回主线程
+      //通过Msg对象，把数据带回主线程
         //获取Msg对象，用于返回主线程。即把一个一个的Msg放入队列中
         Message msg = handler.obtainMessage(5);
         //msg.what = 5;//what用于整数类型，用于数据比对，类似快递寄件的电话号码
         msg.obj = bundle;//obj类型可以传输所有数据;  放入bundle,带回
         handler.sendMessage(msg);//handler把msg放入msg队列中去
-
-
-
 
 
     }
@@ -364,26 +318,5 @@ public class RateActivity extends AppCompatActivity implements Runnable{
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
+
