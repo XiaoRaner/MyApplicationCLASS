@@ -17,6 +17,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -24,6 +29,9 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 public class RateActivity extends AppCompatActivity implements Runnable{
 
@@ -35,6 +43,8 @@ public class RateActivity extends AppCompatActivity implements Runnable{
     private float dollarRate=0.0f;//想要把新修改的数据保存下来。
     private float euroRate=0.0f;    //改成这里不设置值，值的数据用SharedPreference从.xml文件里面读取
     private float wonRate=0.0f;        //每次打开默认的是最新的值
+
+    private String updateDate="";//更新日期
 
     EditText rmb; //输入
     TextView show;//输出
@@ -56,9 +66,31 @@ public class RateActivity extends AppCompatActivity implements Runnable{
         dollarRate = sharedPreferences.getFloat("dollar_rate",0.0f);//读取数据（数据的id，默认值）
         euroRate = sharedPreferences.getFloat("euro_rate",0.0f);
         wonRate = sharedPreferences.getFloat("won_rate",0.0f);
+        updateDate = sharedPreferences.getString("update_date","");
+
+
+        //获取当前系统时间
+        Date today = Calendar.getInstance().getTime();//日期对象
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");//年月日
+        final String todayStr = sdf.format(today);//时间对象转字符串对象
+
+        Log.i(TAG, "onCreate: sp updateDate=" + updateDate);
+        Log.i(TAG, "onCreate: todayStr=" + todayStr);
+
         Log.i(TAG, "onCreate: sp dollarRate=" + dollarRate);//看是否获得数据
         Log.i(TAG, "onCreate: sp euroRate=" + euroRate);
         Log.i(TAG, "onCreate: sp wonRate=" + wonRate);
+        Log.i(TAG, "onCreate:todayStr=" + todayStr);
+
+        //判断时间是否与系统一样
+        if(!todayStr.equals(updateDate)){
+            Log.i(TAG, "onCreate: 需要更新");
+            //开启子线程
+            Thread t = new Thread(this);
+            t.start();
+        }else{
+            Log.i(TAG, "onCreate: 不需要更新");
+        }
 
 
 //在onCreate方法中开启子线程，并重写handleMessage方法
@@ -67,19 +99,40 @@ public class RateActivity extends AppCompatActivity implements Runnable{
         Thread t = new Thread(this);//t为子线程
         t.start();
 
-        handler = new Handler() {
-            //改写父类方法，相当于新建一个java类(.class)，作为队列，储存数据
+        handler = new Handler(){
             @Override
             public void handleMessage(Message msg) {
-                if(msg.what==5){  //what要相同
-                    String str = (String) msg.obj;//获取数据进行处理；强制转换（必须是可以强转的）
-                    Log.i(TAG, "handleMessage: getMessage msg = " + str);
-                    show.setText(str);//获取子线程数据，在主线程中显示出来
-                }
+                if(msg.what==5){
+                    Bundle bdl = (Bundle) msg.obj;  //子线程提出bundle中的数据
+                    dollarRate = bdl.getFloat("dollar-rate");
+                    euroRate = bdl.getFloat("euro-rate");
+                    wonRate = bdl.getFloat("won-rate");
 
+                    Log.i(TAG, "handleMessage: dollarRate:" + dollarRate);
+                    Log.i(TAG, "handleMessage: euroRate:" + euroRate);
+                    Log.i(TAG, "handleMessage: wonRate:" + wonRate);
+
+                    //保存更新的日期
+                    SharedPreferences sp = getSharedPreferences("myrate", Activity.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sp.edit();
+                    editor.putFloat("dollar_rate",dollarRate);
+                    editor.putFloat("euro_rate",euroRate);
+                    editor.putFloat("won_rate",wonRate);
+                    editor.putString("update_date",todayStr);
+                    editor.apply();
+
+
+                    Toast.makeText(RateActivity.this, "汇率已更新", Toast.LENGTH_SHORT).show();//给提示
+                }
                 super.handleMessage(msg);
         }
     };
+
+
+
+
+
+
 
     }
 
@@ -211,25 +264,18 @@ public class RateActivity extends AppCompatActivity implements Runnable{
         Log.i(TAG, "run: run()......");
 
         //给子线程加上延时
-        for(int i=1;i<3;i++){
-            Log.i(TAG, "run: i=" + i);
             try {
-                Thread.sleep(2000);//延时2000毫秒，即两秒钟
+                Thread.sleep(3000);//延时3000毫秒，即3秒钟
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }
 
-        //获取Msg对象，用于返回主线程。即把一个一个的Msg放入队列中
-        Message msg = handler.obtainMessage(5);
-        //msg.what = 5;//what用于整数类型，用于数据比对，类似快递寄件的电话号码
-        msg.obj = "Hello from run()";//obj类型可以传输所有数据
-        handler.sendMessage(msg);//handler把msg放入msg队列中去
+
 
         //获取网络数据
-        URL url = null;//URL标记网络地址
+       /* URL url = null;//URL标记网络地址
         try {
-            url = new URL("http://www.usd-cny.com/icbc.htm");//填入地址
+            url = new URL("www.usd-cny.com/bankofchina.htm");//填入地址
             HttpURLConnection http = (HttpURLConnection) url.openConnection(); //打开链接
             InputStream in = http.getInputStream();//输入流，存网络数据
 
@@ -240,7 +286,63 @@ public class RateActivity extends AppCompatActivity implements Runnable{
             e.printStackTrace();
         } catch (IOException e) {//异常捕获
             e.printStackTrace();
+        }*/ //直接把网页给解析网页的Document包
+
+
+        Bundle bundle = new Bundle();//用于保存获取到的汇率
+
+        Document doc = null; //解析网页的包
+        try {
+            String url = "http://www.usd-cny.com/bankofchina.htm";
+            doc = Jsoup.connect(url).get();//把网页给这个包解析
+            Log.i(TAG, "run: " + doc.title());//TAG，获得当前网页的title
+
+            Elements tables = doc.getElementsByTag("table");//获得网页标签名table的集合
+
+            /*int i=1;
+            for(Element table:tables){
+                Log.i(TAG,"run:table["+i+"]="+table);
+                i++;
+            }*/   //找所需要的数据是第几个table
+
+            Element table6 = tables.get(5);//所需数据在第6个table,在集合中排第5
+            //Log.i(TAG, "run: table6=" + table6);
+
+            //获取TD中的数据
+            Elements tds = table6.getElementsByTag("td");//从table6中获得所需数据所在的 td 集合
+            for(int i=0;i<tds.size();i+=8){//原网页每行8个元素，想提取同一列就要每隔8个提取一次
+                Element td1 = tds.get(i);//td1为第一列数据
+                Element td2 = tds.get(i+5);//td2为刘列数据，再第一列上加5
+
+                String str1 = td1.text();
+                String val = td2.text();
+
+                Log.i(TAG, "run: " + str1 + "==>" + val);//看提取出了什么数据
+
+                float v = 100f / Float.parseFloat(val);
+                if("美元".equals(str1)){           //如果是美元
+                    bundle.putFloat("dollar-rate", v);   //数据存入bundle
+                }else if("欧元".equals(str1)){
+                    bundle.putFloat("euro-rate", v);
+                }else if("韩国元".equals(str1)){
+                    bundle.putFloat("won-rate", v);
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+        //通过Msg对象，把数据带回主线程
+        //获取Msg对象，用于返回主线程。即把一个一个的Msg放入队列中
+        Message msg = handler.obtainMessage(5);
+        //msg.what = 5;//what用于整数类型，用于数据比对，类似快递寄件的电话号码
+        msg.obj = bundle;//obj类型可以传输所有数据;  放入bundle,带回
+        handler.sendMessage(msg);//handler把msg放入msg队列中去
+
+
+
+
 
     }
 
