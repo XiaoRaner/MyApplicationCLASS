@@ -1,14 +1,20 @@
 package com.swufe.myapplicationclass;
 //页面列表，每一行列表项由2个含数据的控件组成
 import android.app.ListActivity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.SimpleAdapter;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import static android.content.ContentValues.TAG;
 
-public class MyList2Activity extends ListActivity { //继承列表父类，整个页面是一个列表
+public class MyList2Activity extends ListActivity implements AdapterView.OnItemClickListener{ //继承列表父类，整个页面是一个列表
 
     Handler handler;
     private ArrayList<HashMap<String,String>>listItems;//声明数据项，存放文字、图片信息等
@@ -26,6 +32,8 @@ public class MyList2Activity extends ListActivity { //继承列表父类，整�
 
         initListView();//调用initListView方法
         this.setListAdapter(listItemAdapter);//应用适配器listItemAdapter
+
+        getListView().setOnItemClickListener(this);//监听
 
     }
 
@@ -56,9 +64,35 @@ public class MyList2Activity extends ListActivity { //继承列表父类，整�
     }
 
 
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
+        Log.i(TAG, "onItemClick: parent=" + parent);
+        Log.i(TAG, "onItemClick: view=" + view);
+        Log.i(TAG, "onItemClick: position=" + position);
+        Log.i(TAG, "onItemClick: id=" + id);
 
+        //从ListView中获取选中数据
+        HashMap<String,String> map = (HashMap<String, String>) getListView().getItemAtPosition(position);
+        String titleStr = map.get("ItemTitle");
+        String detailStr = map.get("ItemDetail");
+        Log.i(TAG, "onItemClick: titleStr=" + titleStr);
+        Log.i(TAG, "onItemClick: detailStr=" + detailStr);
 
+        //从View中获取选中数据
+        TextView title = (TextView) view.findViewById(R.id.itemTitle);
+        TextView detail = (TextView) view.findViewById(R.id.itemDetail);
+        String title2 = String.valueOf(title.getText());
+        String detail2 = String.valueOf(detail.getText());
+        Log.i(TAG, "onItemClick: title2=" + title2);
+        Log.i(TAG, "onItemClick: detail2=" + detail2);
 
+        //打开新的页面，传入参数
+        Intent rateCalc = new Intent(this,RateCalcActivity.class);
+        rateCalc.putExtra("title",titleStr);
+        rateCalc.putExtra("rate",Float.parseFloat(detailStr));
+        startActivity(rateCalc);
+
+    }
 }
 
