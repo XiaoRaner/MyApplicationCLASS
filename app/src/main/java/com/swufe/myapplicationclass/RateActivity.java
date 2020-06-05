@@ -92,7 +92,7 @@ public class RateActivity extends AppCompatActivity {
 
     }
 
-    //代码被提取成一个方法，在方法3和方法6中使用
+    //代码被提取成一个方法，在方法3和方法6中使用。避免大段重复代码
     private void openConfig() {
         //打开一个页面Activity
         Intent config = new Intent(this, ConfigActivity.class);//调用Intent对象。参数：从哪个窗口打开，要打开的窗口名字
