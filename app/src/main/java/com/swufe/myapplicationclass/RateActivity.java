@@ -33,7 +33,7 @@ public class RateActivity extends AppCompatActivity {
         show = (TextView) findViewById(R.id.show);
     }
 
-     //onClick方法，参数为View时，作为按钮事件处理，点击控件时调用。控件加上android:onClick="onClick"
+     //onClick方法，参数为View时，作为按钮事件处理。点击控件时调用。控件加上android:onClick="onClick"
      public void onClick(View btn)        {
          // 首先获取用户输入，然后根据不同币种计算出不同的结果，如果用户没有输入内容，则给出提示
 
